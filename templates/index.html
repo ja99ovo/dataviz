@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main page</title>
+    <style>  
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: flex-end;
+            align-items: stretch;
+            height: 100vh;           
+        }
+
+        .button {
+            width: calc(100vh / 4); /* Ajuster la largeur en fonction de la hauteur */
+            height: calc(100vh / 4); /* Hauteur égale à 25% de la hauteur de l'écran */
+            flex-grow: 1;
+            margin-bottom: 0px; /* Ajouter une marge entre les boutons */
+            margin-top: 20px; /* Ajouter une marge au-dessus de chaque bouton */
+            border: 1px solid black;
+            background-color: lightgray;
+            cursor: pointer;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .pokedexGrid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(6, 1fr);
+            grid-gap: 10px;
+            width: 80%;
+            margin: 100px auto;
+            margin-left: 0;
+            margin-top: 100px;
+        }
+        .pokedexBox {
+            background-color: lightgray;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            /*height: 100px;*/
+            position:relative
+        }
+        .pokedexBoxText {
+            font-size: 10px;
+            height: 20px;
+            position:absolute;
+            top:0px;
+            left:0px;
+            object-fit: contain;
+        }
+        .pokedexBoxImages{
+            height: 80px;
+            width:100%;
+            flex-direction: column;
+            position:absolute;
+            left:0px;
+            bottom:0px;
+        }
+        .pokedexBoxSprite{
+            margin-left: 0;
+            height: 80px;
+            width: 50%;
+            position:absolute;
+            left:0px;
+            bottom:0px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+        }
+        .pokedexBoxSprite img{
+            position:relative;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .pokedexboxTypes{
+            /*float:right;*/
+            height: 65px;
+            width: 50%;
+            position:absolute;
+            /* right:0px;*/
+            bottom:0px;
+        }
+        .pokedexboxTypes img{
+            position:relative;
+            width: 100%;
+            height: 30%;
+            object-fit: contain;
+        }
+        h2 {
+            margin: 0;
+        }
+        .type-image {
+            height: auto;
+            width:8%; /* Ajustez la taille des images selon vos besoins */ /* Ajustez la taille des images selon vos besoins */
+            margin-right: 10px; /* Espacement entre les images */
+            cursor: pointer; /* Curseur pointer pour indiquer l'interaction */
+            filter: brightness(50%);
+        }
+    
+        .selected {
+            filter: brightness(110%);; /* Activer l'image */
+        }
+    
+        .type-image:hover {
+            opacity: 0.7; /* Réduire l'opacité au survol pour indiquer l'interaction */
+        }
+        .topBar {
+            position: fixed; top: 0; width: 100%; padding: 10px 0; background-color: white; margin-bottom: 100px;
+        }
+
+       
+    </style>
+</head>
+<body>
+    
+    <!-- Filtres -->
+    <div class="topBar">
+        <input type="text" id="searchInput" placeholder="Rechercher par nom...">
+        <label>Filtrer par type :</label>
+        <select id="filterMode">
+            <option value="or">OU</option>
+            <option value="and">ET</option>
+        </select>
+
+        <div>
+            <img src="static/images/types/bug.png" alt="Bug" id="bug" class="type-image" onclick="toggleFilter('bug')">
+            <img src="static/images/types/dark.png" alt="Dark" id="dark" class="type-image" onclick="toggleFilter('dark')">
+            <img src="static/images/types/dragon.png" alt="Dragon" id="dragon" class="type-image" onclick="toggleFilter('dragon')">
+            <img src="static/images/types/electric.png" alt="Electric" id="electric" class="type-image" onclick="toggleFilter('electric')">
+            <img src="static/images/types/fairy.png" alt="Fairy" id="fairy" class="type-image" onclick="toggleFilter('fairy')">
+            <img src="static/images/types/fighting.png" alt="Fighting" id="fighting" class="type-image" onclick="toggleFilter('fighting')">
+            <img src="static/images/types/fire.png" alt="Fire" id="fire" class="type-image" onclick="toggleFilter('fire')">
+            <img src="static/images/types/flying.png" alt="Flying" id="flying" class="type-image" onclick="toggleFilter('flying')">
+            <img src="static/images/types/ghost.png" alt="Ghost" id="ghost" class="type-image" onclick="toggleFilter('ghost')">
+        </div>
+        <div>
+            <img src="static/images/types/grass.png" alt="Grass" id="grass" class="type-image" onclick="toggleFilter('grass')">
+            <img src="static/images/types/ground.png" alt="Ground" id="ground" class="type-image" onclick="toggleFilter('ground')">
+            <img src="static/images/types/ice.png" alt="Ice" id="ice" class="type-image" onclick="toggleFilter('ice')">
+            <img src="static/images/types/normal.png" alt="Normal" id="normal" class="type-image" onclick="toggleFilter('normal')">
+            <img src="static/images/types/poison.png" alt="Poison" id="poison" class="type-image" onclick="toggleFilter('poison')">
+            <img src="static/images/types/psychic.png" alt="Psychic" id="psychic" class="type-image" onclick="toggleFilter('psychic')">
+            <img src="static/images/types/rock.png" alt="Rock" id="rock" class="type-image" onclick="toggleFilter('rock')">
+            <img src="static/images/types/steel.png" alt="Steel" id="steel" class="type-image" onclick="toggleFilter('steel')">
+            <img src="static/images/types/water.png" alt="Water" id="water" class="type-image" onclick="toggleFilter('water')">
+        </div>
+    </div>
+
+
+    
+    <!-- Affichage de la liste de pokemons -->
+    <div id="result" class="pokedexGrid">
+        {% for pokemon in pokemons %}
+            <div class="pokedexBox" onclick="redirectToPokemon('{{ pokemon.pokedex_number }}', '{{ pokemon.name }}')">
+                <div class="pokedexBoxText">
+                    <h2>{{ pokemon.pokedex_number }}  {{ pokemon.name }}</h2>
+                </div>
+                <div>
+                </div>
+                <!--<div class="pokedexBoxImages" id="pokemonImage_{{ pokemon.pokedex_number }}">
+                    <div class="pokedexBoxSprite">
+                        <img src="{{ pokemon.sprite }}" alt="{{ pokemon.name }}" >
+                    </div>
+                </div>
+                
+                
+                <div class="pokedexboxTypes"> 
+                    <img src="{{ pokemon.imgtype1 }}" alt="{{ pokemon.type1 }}">
+                    {%if pokemon.type2%}
+                    <img src="{{ pokemon.imgtype2 }}" alt="{{ pokemon.type2 }}">
+                    {%endif%}
+                </div> -->
+            </div>
+        {% endfor %}
+    </div>
+
+
+
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script>
+
+
+        var query =""
+        var types=[]
+        var filterMode="or"
+        
+        $(document).ready(function() { // Quand le doc est entierement chargé
+
+            // Lorsque la valeur du menu déroulant change
+            $('#filterMode').change(function() {
+                // Récupérer la nouvelle valeur sélectionnée dans le menu déroulant
+                filterMode = $(this).val();
+
+                // Envoyer une requête AJAX avec la nouvelle valeur sélectionnée
+                $.ajax({
+                    url: '/filterMode',
+                    type: 'POST',
+                    data: {
+                        'filterMode': filterMode, 'types': types, 'query': query // Envoyer la valeur sélectionnée dans les données de la requête
+                    },
+                    success: function(response) {
+                        $('#result').html(response);// Colle la réponse dans le 1er div avec l'id "result"
+                    },
+                    error: function(error) {
+                        console.log(error);
+                    }
+                });
+            });
+        });
+
+
+
+
+        $(document).ready(function(){
+            
+            // Lorsque la valeur de l'input change
+            $('#searchInput').on('input', function() {
+                query = $(this).val();
+                $.ajax({
+                    url: '/search',
+                    type: 'POST',
+                    data: { 'filterMode': filterMode, 'types': types, 'query': query },
+                    success: function(response) {
+                        $('#result').html(response);
+                    },
+                    error: function(error) {
+                        console.log(error);
+                    }
+                });
+            });
+        });
+
+       
+
+
+        function toggleFilter(type) {
+            var image = document.getElementById(type);
+            
+            // Inverser la classe CSS pour griser ou activer l'image
+            if (image.classList.contains('selected')) {
+                image.classList.remove('selected');
+                types.splice(types.indexOf(type), 1);
+                console.log(types);
+            } else {
+                image.classList.add('selected');
+                types.push(type);
+                console.log(types);
+            }
+
+            $.ajax({
+                    url: '/search_by_type',
+                    type: 'POST',
+                    data: { 'filterMode': filterMode, 'types': types, 'query': query },
+                    success: function(response) {
+                        $('#result').html(response); // Mettre à jour les résultats sur la page
+                    },
+                    error: function(error) {
+                        console.log(error);
+                    }
+                });
+        }
+
+
+        function redirectToPokemon(pokedexNumber, pokemonName) {
+            // Construire l'URL de redirection avec les paramètres pokedex_number et name
+            var redirectURL = '/pokemon?pokedex_number=' + pokedexNumber + '&name=' + encodeURIComponent(pokemonName);
+            // Rediriger l'utilisateur vers l'URL construite
+            window.location.href = redirectURL;
+        }
+
+    </script>
+    
+</body>
+</html>

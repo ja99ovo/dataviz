@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
          body {
             position: relative;
             margin: 0;
             display: flex;
             justify-content: space-between;
+            padding: 20px 100px;
         }
 
         section {
@@ -18,11 +20,13 @@
         }
 
         h1 {
-            margin-left: 150px;
+            font-size: 24px; /* 调整为你想要的更小字体大小 */
+            font-family: 'Arial', sans-serif; 
+            margin: 5px;
         }
        
         .types {
-            display: flex;
+            
             width: 400px;
         }
 
@@ -34,9 +38,9 @@
         }
 
         .image-pokemon{
-            margin-left: 100px;
-            height : 250px;
-            width: 250px;
+
+            height : 100px;
+            width: 100px;
         }
 
         .menu {
@@ -44,6 +48,23 @@
             padding: 10px;
         }
         
+        .weakness_container {
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr; 
+            background: #C3C3C3;
+        }
+
+        .weakness_column {
+            padding: 3px;
+            border: 1px solid #ccc;
+        }
+
+
+
+
+
+
         /* Section pour un ID particulier */
         #button_section {
             display: flex;
@@ -72,23 +93,100 @@
             background-color: #f2f2f2;
         }
 
+        .radar-area {
+            fill: rgba(54, 162, 235, 0.2);
+            stroke: rgba(54, 162, 235, 1);
+            stroke-width: 2px;
+        }
+        .axis-line {
+            stroke: #949494;
+            stroke-width: 1px;
+        }
+        .axis-label {
+            font-size: 12px;
+            fill: #333;
+        }
+        .circle {
+            fill: rgba(54, 162, 235, 1);
+        }
 
-
+        .type_img{
+            width: 30%;
+            height: 30%;
+        }
+        .type_icone{
+            width: 10%;
+            height: 10%;
+            border-radius: 50%;
+        }
+        .tooltip {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .tooltip2 {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+        }
     </style>
 </head>
 <body>
-    <section>
+    
+    <div style="background: #C3C3C3; text-align: center;">
         <img class="image-pokemon" src="{{ url_for('static', filename='images/sprites/' + request.args.get('pokedex_number') + '.png') }}" alt="Dracaufeu">
         <h1>{{ request.args.get('name') }}</h1>
         <h1>N° Pokedex : {{ request.args.get('pokedex_number') }}</h1>
         <div class="types">
-            <img src="{{ url_for('static', filename='images/types/' + pokemon_info['type1'] + '.png') }}" alt="{{ pokemon_info['type1'] }}">
+            <img class="type_img" src="{{ url_for('static', filename='images/types/' + pokemon_info['type1'] + '.png') }}" alt="{{ pokemon_info['type1'] }}">
             {% if pokemon_info['type2'] != '' %}
-            <img src="{{ url_for('static', filename='images/types/' + pokemon_info['type2'] + '.png') }}" alt="{{ pokemon_info['type2'] }}">
+            <img class="type_img" src="{{ url_for('static', filename='images/types/' + pokemon_info['type2'] + '.png') }}" alt="{{ pokemon_info['type2'] }}">
             {%endif%}
         </div>
-    </section>
-    
+
+        <div style="background: #D1D1D1; text-align: center;">
+            <h3>height: {{ pokemon_info.height_m }}</h3>
+            <h3>width: {{ pokemon_info.weight_kg }}</h3>
+            <h3>capture_rate: {{ pokemon_info.capture_rate }}</h3>
+        </div>
+
+
+        <div class="weakness_container">
+            <div class="weakness_column">
+                <div id="resistances" class="section">
+                    <h3>resistances</h3>
+                    <div class="icons"></div>
+                </div>
+
+                <div id="weaknesses" class="section">
+                    <h3>weaknesses</h3>
+                    <div class="icons"></div>
+                </div>
+            
+            </div>
+            <div class="weakness_column">
+                <div id="immunities" class="section">
+                    <h3>immunities</h3>
+                    <div class="icons"></div>
+                </div>
+
+                <div id="doubleWeaknesses" class="section">
+                    <h3>doubleWeaknesses</h3>
+                    <div class="icons"></div>
+                </div>
+
+            </div>
+        </div>
+        <div style="background: #D1D1D1; width: 100%; height: 300px;">
+            <svg width="300" height="300"></svg>
+            
+        </div>
+
+
+    </div>
+
+
+
     <section class="section_droite">
         <!-- Section pour les boutons alignés en haut à droite -->
         <div id="button_section">
@@ -111,6 +209,256 @@
             <div>
         </div>
     </section>
+
     <script src="static/js/pokemon_menu.js"></script>
 </body>
 </html>
+
+<script>
+
+    function createRadarChart(pokemonInfo) {
+        const data = [
+        { axis: "hp", value: pokemonInfo.hp, max: 250 },
+        { axis: "attack", value: pokemonInfo.attack, max: 155 },
+        { axis: "sp_attack", value: pokemonInfo.sp_attack, max: 100 },
+        { axis: "defense", value: pokemonInfo.defense, max: 194 },
+        { axis: "sp_defense", value: pokemonInfo.sp_defense, max: 130 },
+        { axis: "speed", value: pokemonInfo.speed, max: 150 },
+        ];
+
+        // 图表尺寸
+        const width = 300;
+        const height = 300;
+        const radius = Math.min(width, height) / 2 - 50;
+        const centerX = width / 2;
+        const centerY = height / 2;
+
+        // 创建 SVG 容器
+        const svg = d3.select("svg")
+            .attr("width", width)
+            .attr("height", height);
+
+        // 计算每个轴的角度
+        const angleSlice = (Math.PI * 2) / data.length;
+
+        // 创建比例尺
+        const scales = data.map(d => d3.scaleLinear().domain([0, d.max]).range([0, radius]));
+
+        // 创建雷达图容器
+        const radarGrid = svg.append("g").attr("transform", `translate(${centerX},${centerY})`);
+
+        // 绘制网格线和轴标签
+        data.forEach((d, i) => {
+            const angle = angleSlice * i - Math.PI / 2;
+            radarGrid.append("line")
+                .attr("x1", 0)
+                .attr("y1", 0)
+                .attr("x2", Math.cos(angle) * radius)
+                .attr("y2", Math.sin(angle) * radius)
+                .attr("stroke", "#ccc")
+                .attr("stroke-width", 1)
+                .attr("class", "axis-line");
+
+            // 添加轴标签和值
+            const label = radarGrid.append("text")
+                .attr("x", Math.cos(angle) * (radius + 20))
+                .attr("y", Math.sin(angle) * (radius + 20))
+                .attr("text-anchor", Math.cos(angle) > 0 ? "start" : "end")
+                .attr("font-size", "10px")
+                .attr("class", "axis-label");
+
+            // 添加标签文本
+            label.append("tspan")
+                .attr("x", Math.cos(angle) * (radius + 20))
+                .attr("dy", "0em") // 第一行
+                .text(d.axis);
+
+            // 添加值文本
+            label.append("tspan")
+                .attr("x", Math.cos(angle) * (radius + 20))
+                .attr("dy", "1.2em") // 换行并调整位置
+                .text(d.value);
+        });
+
+        // 绘制雷达图数据区域
+        const radarArea = radarGrid.append("path")
+            .datum(data)
+            .attr("d", d => {
+                const path = d.map((point, i) => {
+                    const angle = angleSlice * i - Math.PI / 2;
+                    const r = scales[i](point.value);
+                    const x = Math.cos(angle) * r;
+                    const y = Math.sin(angle) * r;
+                    return [x, y];
+                });
+                return d3.line().curve(d3.curveLinearClosed)(path);
+            })
+            .attr("fill", "rgba(10, 12, 14, 0.2)")
+            .attr("stroke", "rgb(54, 142, 235)")
+            .attr("stroke-width", 2)
+            .attr("class", "radar-area");
+
+        // 数据点
+        radarGrid.selectAll(".circle")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("cx", (d, i) => Math.cos(angleSlice * i - Math.PI / 2) * scales[i](d.value))
+            .attr("cy", (d, i) => Math.sin(angleSlice * i - Math.PI / 2) * scales[i](d.value))
+            .attr("r", 4)
+            .attr("fill", "rgba(54, 162, 235, 1)")
+            .attr("class", "circle")
+            .on("mouseover", function (event, d) {
+                // 鼠标悬停时放大圆点
+                d3.select(this)
+                    .attr("r", 8) // 放大半径
+                    .attr("fill", "rgba(255, 99, 132, 1)"); // 改变颜色
+        
+                // 显示提示信息（可选）
+                tooltip.transition().duration(200).style("opacity", 0.9);
+                tooltip.html(`<strong>${d.value}</strong> `)
+                    .style("left", `${event.pageX + 5}px`)
+                    .style("top", `${event.pageY - 20}px`);
+            })
+            .on("mouseout", function () {
+                // 鼠标离开时恢复圆点样式
+                d3.select(this)
+                    .attr("r", 4) // 恢复半径
+                    .attr("fill", "rgba(54, 162, 235, 1)"); // 恢复颜色
+        
+                // 隐藏提示信息（可选）
+                tooltip.transition().duration(200).style("opacity", 0);
+            });
+
+        // 网格线
+        const levels = 5;
+        for (let level = 1; level <= levels; level++) {
+            const gridRadius = (radius / levels) * level;
+            radarGrid.append("circle")
+                .attr("cx", 0)
+                .attr("cy", 0)
+                .attr("r", gridRadius)
+                .attr("stroke", "black") 
+                .attr("stroke-width", 0.5)
+                .attr("fill", "none")
+                .attr("class", "axis-line");
+        }
+        // 添加 tooltip
+        const tooltip = d3.select("body").append("div")
+        .attr("class", "tooltip")
+        .style("position", "absolute")
+        .style("background", "#fff")
+        .style("padding", "5px")
+        .style("border", "1px solid #ccc")
+        .style("border-radius", "5px")
+        .style("pointer-events", "none")
+        .style("opacity", 0); // 初始隐藏
+
+
+}
+
+
+// 动态生成图标
+function getTypeResistances(){
+    
+    // 定义分类的数组
+    const immunities = []; // 0
+    const resistances = []; // 0.5
+    const weaknesses = [];  // 1.5
+    const doubleWeaknesses = []; // 2
+
+    // 遍历 pokemonInfo 对象
+    for (const [key, value] of Object.entries(pokemonInfo)) {
+        if (key.startsWith("against_")) {
+            const type = key.replace("against_", ""); // 去掉 "against_" 前缀
+            console.log(typeof value);
+            switch (value) {
+                case '0':
+                    immunities.push(type);
+                    break;
+                case "0.5":
+                    resistances.push(type);
+                    break;
+                case "1.5":
+                    weaknesses.push(type);
+                    break;
+                case "2":
+                    doubleWeaknesses.push(type);
+                    break;   
+            }
+        }
+        
+    }
+    return { immunities, resistances, weaknesses, doubleWeaknesses };
+}
+
+
+function renderIcons(selector, types) {
+
+    const container = document.querySelector(`${selector} .icons`);
+    if (types) {
+        container.innerHTML = types.map(type => `
+            <img class="type_icone" src="static/images/icones/${type}.png" alt="${type}">
+        `).join("");
+
+          
+          const icons = container.querySelectorAll(".type_icone");
+          icons.forEach(icon => {
+              
+              icon.addEventListener("mouseover", (event) => {
+                icon.style.transform = "scale(1.2)";
+                
+                tooltip2.transition().duration(200).style("opacity", 0.9);
+                tooltip2.html(`<strong>${event.target.alt}</strong> `)
+                    .style("left", `${event.pageX + 5}px`)
+                    .style("top", `${event.pageY - 20}px`);
+              });
+  
+              
+              icon.addEventListener("mouseout", () => {
+                const icon = event.target.closest(".type_icone");
+                if (icon) {
+                    
+                    icon.style.transform = "scale(1)";
+            
+                    
+                    tooltip2.transition().duration(200).style("opacity", 0);
+                }
+              });
+
+  
+          });
+        // 添加 tooltip
+        const tooltip2 = d3.select("body").append("div")
+        .attr("class", "tooltip2")
+        .style("position", "absolute")
+        .style("background", "#fff")
+        .style("padding", "5px")
+        .style("border", "1px solid #ccc")
+        .style("border-radius", "5px")
+        .style("pointer-events", "none")
+        .style("opacity", 0);
+
+
+
+    } else {
+        container.innerHTML = "<p>rien</p>";
+    }
+}
+
+
+
+const pokemonInfo = {{ pokemon_info | tojson | safe }}; 
+createRadarChart(pokemonInfo);
+const result = getTypeResistances(pokemonInfo);
+console.log(result);
+
+const { immunities, resistances, weaknesses, doubleWeaknesses } = getTypeResistances(pokemonInfo);
+
+
+
+renderIcons("#immunities", immunities);
+renderIcons("#resistances", resistances);
+renderIcons("#weaknesses", weaknesses);
+renderIcons("#doubleWeaknesses", doubleWeaknesses);
+</script>
